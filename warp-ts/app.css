@@ -1,0 +1,39 @@
+﻿@media screen and (max-width: 320px) {
+   @-ms-viewport { width: 320px; }
+}
+
+body
+{
+    margin: 0; padding: 0; border: 0;
+    background: #222;
+    color: #aaa;
+    font-family: 'Segoe UI', sans-serif
+}
+
+h1, div.exercise, div.timer, #footer {
+    margin-left: 25px;
+}
+
+h1 {
+    margin-bottom: 2em;
+}
+
+div.timer {
+    margin-top: 2em;
+}
+
+div.exercise {
+    height: 40px;    
+    font-size: 160%;
+}
+
+div.current-wrapper {
+    background: #333;
+}
+
+#footer {
+    font-size: 60%;
+    position: absolute;
+    bottom: 25px;
+    left: 25px;
+}
