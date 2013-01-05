@@ -75,6 +75,12 @@ class Session {
         this.timerToken = setInterval(() => this.mainLoop (), debug ? 100 : 1000);
         this.playlist = new PlayList();
         this.exerciseTimer = 0;
+
+        this.randomizeDatabase();
+    }
+
+    randomizeDatabase() {
+        this.database.sort(() => 0.5 - Math.random());
     }
 
     nextStep() {
@@ -92,7 +98,7 @@ class Session {
         if (this.position >= this.database.length)
         {
             this.position = 0;
-            this.database.sort(() => 0.5 - Math.random());
+            this.randomizeDatabase();
         }
 
         return this.playlist.steps.current;

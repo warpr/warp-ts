@@ -72,7 +72,13 @@ var Session = (function () {
         }, debug ? 100 : 1000);
         this.playlist = new PlayList();
         this.exerciseTimer = 0;
+        this.randomizeDatabase();
     }
+    Session.prototype.randomizeDatabase = function () {
+        this.database.sort(function () {
+            return 0.5 - Math.random();
+        });
+    };
     Session.prototype.nextStep = function () {
         if(this.playlist.steps.future.isBreak()) {
             this.playlist.enqueue(this.database[this.position]);
@@ -83,9 +89,7 @@ var Session = (function () {
         this.position++;
         if(this.position >= this.database.length) {
             this.position = 0;
-            this.database.sort(function () {
-                return 0.5 - Math.random();
-            });
+            this.randomizeDatabase();
         }
         return this.playlist.steps.current;
     };
