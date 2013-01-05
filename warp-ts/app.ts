@@ -1,7 +1,9 @@
 
+var debug = false;
+
 class Exercise {
     constructor(public displayName: string, public identifier: string,
-        public duration: number, public requiredAttributes: string[]) {}
+        public duration: number) {}
 
     renderTo(element: HTMLElement) {
         if (element)
@@ -15,7 +17,7 @@ class Exercise {
 
 class BreakExercise extends Exercise {
     constructor() {
-        super("break", "break", 15, []);
+        super("break", "break", 15);
     }
 
     isBreak() { return true; }
@@ -23,48 +25,43 @@ class BreakExercise extends Exercise {
 
 class NullExercise extends Exercise {
     constructor() {
-        super("", "NULL", 0, []);
+        super("", "NULL", 0);
     }
+
+    isBreak() { return true; }
 }
 
-class PlayList {
+interface Steps {
     previous: Exercise;
     current: Exercise;
     next: Exercise;
+    future: Exercise;
+}
 
-    constructor() {
-        this.previous = new NullExercise();
-        this.current = new NullExercise();
-        this.next = new NullExercise();
+class PlayList {
+    steps: Steps = {
+        previous: new NullExercise(),
+        current: new NullExercise(),
+        next: new NullExercise(),
+        future: new NullExercise()
     }
-
+    
     enqueue(exercise: Exercise) {
-        this.previous = this.current;
-        this.current = this.next;
-        this.next = exercise;
+        this.steps.previous = this.steps.current;
+        this.steps.current = this.steps.next;
+        this.steps.next = this.steps.future;
+        this.steps.future = exercise;
     }
 
-    renderTo(previous: HTMLElement, current: HTMLElement, next: HTMLElement) {
-        this.previous.renderTo(previous);
-        this.current.renderTo(current);
-        this.next.renderTo(next);
+    updateDisplay() {
+        for (var step in this.steps)
+        {
+            this.steps[step].renderTo(document.getElementById(step));
+        }
     }
 }
 
-var database = [
-    new Exercise("Forward Lunge", "lunge-forward", 30, []),
-    new Exercise("Reverse Lunge", "lunge-reverse", 30, []),
-    new Exercise("Side Lunge (left)", "lunge-side-left", 30, []),
-    new Exercise("Side Lunge (right)", "lunge-side-right", 30, []),
-    new Exercise("Squat", "squat", 30, []),
-    new Exercise("Kettlebell Squat", "squat-kettlebell", 30, ["Kettlebell"]),
-    new Exercise("Wall Press", "pushup-wall-press", 30, [])
-];
-
 class Session {
-    previous: HTMLElement;
-    next: HTMLElement;
-    current: HTMLElement;
     database: Exercise[];
     position: number;
     timerToken: number;
@@ -75,34 +72,30 @@ class Session {
         this.database = database;
         this.position = 0;
 
-        this.previous = document.getElementById('previous');
-        this.next = document.getElementById('next');
-        this.current = document.getElementById('current');
-
-        this.timerToken = setInterval(() => this.mainLoop (), 100);
+        this.timerToken = setInterval(() => this.mainLoop (), debug ? 100 : 1000);
         this.playlist = new PlayList();
         this.exerciseTimer = 0;
     }
 
     nextStep() {
-        if (this.playlist.next.isBreak())
+        if (this.playlist.steps.future.isBreak())
         {
-            this.playlist.enqueue(database[this.position]);
+            this.playlist.enqueue(this.database[this.position]);
         }
         else
         {
             this.playlist.enqueue(new BreakExercise());
         }
 
-        this.playlist.renderTo(this.previous, this.current, this.next);
+        this.playlist.updateDisplay();
         this.position++;
-        if (this.position >= database.length)
+        if (this.position >= this.database.length)
         {
             this.position = 0;
             this.database.sort(() => 0.5 - Math.random());
         }
 
-        return this.playlist.current;
+        return this.playlist.steps.current;
     }
 
     mainLoop() {
@@ -117,6 +110,32 @@ class Session {
     }
 }
 
+var database = {
+    "lunge-forward": "Forward Lunge",
+    "lunge-reverse": "Reverse Lunge",
+    "lunge-side": "Side Lunge",
+    "squat": "Squat",
+    "squat-wall": "Wall Squat",
+    "squat-kettlebell": "Kettlebell Squat",
+    "kettlebell-swing": "Kettlebell Swing",
+    "kettlebell-press": "Kettlebell Press",
+    "pushup-wall-press": "Wall Press",
+    "pushup": "Push-Up",
+    "situp": "Sit-Up",
+    "plank": "Plank",
+    "bent-over-row": "Bent over Row",
+    "burpee": "Burpee",
+    "plank-row": "Plank Row",
+    "plank-row-to-burpee": "Plank Row to Burpee",
+};
+
 window.onload = () => {
-    var session = new Session(database);
+    var new_database = [];
+    var key: string;
+    for (key in database)
+    {
+        new_database.push(new Exercise(database[key], key, 30));
+    }
+
+    var session = new Session(new_database);
 };

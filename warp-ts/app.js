@@ -3,12 +3,12 @@ var __extends = this.__extends || function (d, b) {
     __.prototype = b.prototype;
     d.prototype = new __();
 };
+var debug = false;
 var Exercise = (function () {
-    function Exercise(displayName, identifier, duration, requiredAttributes) {
+    function Exercise(displayName, identifier, duration) {
         this.displayName = displayName;
         this.identifier = identifier;
         this.duration = duration;
-        this.requiredAttributes = requiredAttributes;
     }
     Exercise.prototype.renderTo = function (element) {
         if(element) {
@@ -23,7 +23,7 @@ var Exercise = (function () {
 var BreakExercise = (function (_super) {
     __extends(BreakExercise, _super);
     function BreakExercise() {
-        _super.call(this, "break", "break", 15, []);
+        _super.call(this, "break", "break", 15);
     }
     BreakExercise.prototype.isBreak = function () {
         return true;
@@ -33,68 +33,61 @@ var BreakExercise = (function (_super) {
 var NullExercise = (function (_super) {
     __extends(NullExercise, _super);
     function NullExercise() {
-        _super.call(this, "", "NULL", 0, []);
+        _super.call(this, "", "NULL", 0);
     }
+    NullExercise.prototype.isBreak = function () {
+        return true;
+    };
     return NullExercise;
 })(Exercise);
 var PlayList = (function () {
     function PlayList() {
-        this.previous = new NullExercise();
-        this.current = new NullExercise();
-        this.next = new NullExercise();
+        this.steps = {
+            previous: new NullExercise(),
+            current: new NullExercise(),
+            next: new NullExercise(),
+            future: new NullExercise()
+        };
     }
     PlayList.prototype.enqueue = function (exercise) {
-        this.previous = this.current;
-        this.current = this.next;
-        this.next = exercise;
+        this.steps.previous = this.steps.current;
+        this.steps.current = this.steps.next;
+        this.steps.next = this.steps.future;
+        this.steps.future = exercise;
     };
-    PlayList.prototype.renderTo = function (previous, current, next) {
-        this.previous.renderTo(previous);
-        this.current.renderTo(current);
-        this.next.renderTo(next);
+    PlayList.prototype.updateDisplay = function () {
+        for(var step in this.steps) {
+            this.steps[step].renderTo(document.getElementById(step));
+        }
     };
     return PlayList;
 })();
-var database = [
-    new Exercise("Forward Lunge", "lunge-forward", 30, []), 
-    new Exercise("Reverse Lunge", "lunge-reverse", 30, []), 
-    new Exercise("Side Lunge (left)", "lunge-side-left", 30, []), 
-    new Exercise("Side Lunge (right)", "lunge-side-right", 30, []), 
-    new Exercise("Squat", "squat", 30, []), 
-    new Exercise("Kettlebell Squat", "squat-kettlebell", 30, [
-        "Kettlebell"
-    ]), 
-    new Exercise("Wall Press", "pushup-wall-press", 30, [])
-];
 var Session = (function () {
     function Session(database) {
         var _this = this;
         this.database = database;
         this.position = 0;
-        this.previous = document.getElementById('previous');
-        this.next = document.getElementById('next');
-        this.current = document.getElementById('current');
         this.timerToken = setInterval(function () {
             return _this.mainLoop();
-        }, 100);
+        }, debug ? 100 : 1000);
         this.playlist = new PlayList();
         this.exerciseTimer = 0;
     }
     Session.prototype.nextStep = function () {
-        if(this.playlist.next.isBreak()) {
-            this.playlist.enqueue(database[this.position]);
+        if(this.playlist.steps.future.isBreak()) {
+            this.playlist.enqueue(this.database[this.position]);
         } else {
             this.playlist.enqueue(new BreakExercise());
         }
-        this.playlist.renderTo(this.previous, this.current, this.next);
+        this.playlist.updateDisplay();
         this.position++;
-        if(this.position >= database.length) {
+        if(this.position >= this.database.length) {
             this.position = 0;
             this.database.sort(function () {
                 return 0.5 - Math.random();
             });
         }
-        return this.playlist.current;
+        return this.playlist.steps.current;
     };
     Session.prototype.mainLoop = function () {
         if(this.exerciseTimer < 0.5) {
@@ -106,7 +99,30 @@ var Session = (function () {
     };
     return Session;
 })();
+var database = {
+    "lunge-forward": "Forward Lunge",
+    "lunge-reverse": "Reverse Lunge",
+    "lunge-side": "Side Lunge",
+    "squat": "Squat",
+    "squat-wall": "Wall Squat",
+    "squat-kettlebell": "Kettlebell Squat",
+    "kettlebell-swing": "Kettlebell Swing",
+    "kettlebell-press": "Kettlebell Press",
+    "pushup-wall-press": "Wall Press",
+    "pushup": "Push-Up",
+    "situp": "Sit-Up",
+    "plank": "Plank",
+    "bent-over-row": "Bent over Row",
+    "burpee": "Burpee",
+    "plank-row": "Plank Row",
+    "plank-row-to-burpee": "Plank Row to Burpee"
+};
 window.onload = function () {
-    var session = new Session(database);
+    var new_database = [];
+    var key;
+    for(key in database) {
+        new_database.push(new Exercise(database[key], key, 30));
+    }
+    var session = new Session(new_database);
 };
 //@ sourceMappingURL=app.js.map
