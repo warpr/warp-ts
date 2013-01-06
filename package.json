@@ -1,0 +1,10 @@
+{
+    "author": "Kuno Woudt <kuno@frob.nl>",
+    "dependencies": {
+        "typescript": "0.8.1"
+    },
+    "description": "warp TS*",
+    "license": "Apache-2",
+    "name": "warp-ts",
+    "version": "0.0.1"
+}
